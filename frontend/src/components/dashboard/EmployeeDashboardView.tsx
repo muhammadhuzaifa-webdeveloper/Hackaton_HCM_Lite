@@ -335,12 +335,21 @@ export default function EmployeeDashboardView({
                 <p className="text-[11px] text-slate-500">Your categorized annual entitlement breakdown</p>
               </div>
             </div>
-            <button
-              onClick={() => onNavigateTab("leave")}
-              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/60 transition-all hover:bg-emerald-100"
-            >
-              + Apply Leave
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onNavigateTab("leave")}
+                className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-3.5 py-1.5 rounded-xl shadow-xs transition-all active:scale-95"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-emerald-200" />
+                <span>AI Leave Submit</span>
+              </button>
+              <button
+                onClick={() => onNavigateTab("leave")}
+                className="text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200/60 transition-all"
+              >
+                + View Balances
+              </button>
+            </div>
           </div>
 
           {leaveBalances.length === 0 ? (

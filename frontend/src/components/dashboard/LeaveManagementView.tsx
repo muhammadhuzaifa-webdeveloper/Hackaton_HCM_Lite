@@ -2,7 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { hcmApi } from "@/api/hcm";
-import { Calendar, Plus, Sparkles, Check, X, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import {
+  Calendar,
+  Sparkles,
+  Check,
+  X,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Send,
+  Zap,
+  Filter,
+  ArrowRight,
+  Info,
+  CalendarCheck,
+  HelpCircle,
+} from "lucide-react";
 
 interface LeaveProps {
   userRole: string;
@@ -18,7 +33,7 @@ export default function LeaveManagementView({ userRole }: LeaveProps) {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Apply Form
+  // Apply Form State
   const [selectedType, setSelectedType] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -27,13 +42,23 @@ export default function LeaveManagementView({ userRole }: LeaveProps) {
   const [applyError, setApplyError] = useState("");
   const [applySuccess, setApplySuccess] = useState("");
 
-  // Smart Leave NLP input
+  // AI Smart Leave Input
   const [smartPrompt, setSmartPrompt] = useState("");
   const [parsingSmart, setParsingSmart] = useState(false);
+  const [autoSubmitting, setAutoSubmitting] = useState(false);
+  const [aiHighlight, setAiHighlight] = useState(false);
 
-  // Review comment state (HR/Admin)
+  // Filter & Review State
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [reviewComment, setReviewComment] = useState("");
   const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
+
+  const quickTemplates = [
+    { label: "🩺 Doctor Visit", prompt: "Need 1 day sick leave tomorrow for doctor checkup and fever" },
+    { label: "💍 Family Wedding", prompt: "Need 2 days off next Monday and Tuesday for family wedding ceremony" },
+    { label: "🏖️ Weekend Extension", prompt: "Need 1 day annual leave on Friday for personal family travel" },
+    { label: "🤒 Urgent Medical Rest", prompt: "Not feeling well today, need immediate sick leave for today" },
+  ];
 
   const loadData = async () => {
     setLoading(true);
@@ -67,8 +92,8 @@ export default function LeaveManagementView({ userRole }: LeaveProps) {
     loadData();
   }, []);
 
-  const handleApply = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleApply = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setApplying(true);
     setApplyError("");
     setApplySuccess("");
@@ -91,22 +116,61 @@ export default function LeaveManagementView({ userRole }: LeaveProps) {
     }
   };
 
-  const handleSmartLeaveParse = async () => {
-    if (!smartPrompt.trim()) return;
+  const handleSmartLeaveParse = async (promptText?: string) => {
+    const textToParse = promptText || smartPrompt;
+    if (!textToParse.trim()) return;
     setParsingSmart(true);
     setApplyError("");
+    setApplySuccess("");
 
     try {
-      const res = await hcmApi.smartLeave(smartPrompt);
+      const res = await hcmApi.smartLeave(textToParse);
       if (res.leaveTypeId) setSelectedType(res.leaveTypeId);
       if (res.startDate) setStartDate(res.startDate);
       if (res.endDate) setEndDate(res.endDate);
       if (res.reason) setReason(res.reason);
-      setSmartPrompt("");
+
+      setAiHighlight(true);
+      setTimeout(() => setAiHighlight(false), 2500);
+
+      setApplySuccess(`AI parsed request: ${res.leaveTypeName || "Leave"} from ${res.startDate} to ${res.endDate}!`);
+      if (!promptText) setSmartPrompt("");
     } catch (err: any) {
-      setApplyError("Could not auto-parse smart leave. Please fill fields manually.");
+      setApplyError("Could not auto-parse request. Please fill the fields manually.");
     } finally {
       setParsingSmart(false);
+    }
+  };
+
+  // Instant AI 1-Click Auto Parse & Direct Submit
+  const handleInstantAiSubmit = async (promptText?: string) => {
+    const text = promptText || smartPrompt;
+    if (!text.trim()) return;
+    setAutoSubmitting(true);
+    setApplyError("");
+    setApplySuccess("");
+
+    try {
+      const parsed = await hcmApi.smartLeave(text);
+      if (!parsed.startDate || !parsed.endDate) {
+        throw new Error("Unable to determine leave dates from prompt.");
+      }
+
+      const res = await hcmApi.applyLeave({
+        leaveTypeId: parsed.leaveTypeId || selectedType,
+        startDate: parsed.startDate,
+        endDate: parsed.endDate,
+        reason: parsed.reason || text,
+      });
+
+      setApplySuccess(`⚡ AI Instant Submitted: ${parsed.leaveTypeName || "Leave"} (${parsed.startDate} to ${parsed.endDate}) submitted successfully!`);
+      setSmartPrompt("");
+      setReason("");
+      loadData();
+    } catch (err: any) {
+      setApplyError(err.response?.data?.message || err.message || "AI auto-submit failed.");
+    } finally {
+      setAutoSubmitting(false);
     }
   };
 
@@ -132,113 +196,220 @@ export default function LeaveManagementView({ userRole }: LeaveProps) {
     }
   };
 
-  // Dynamic Theme Styling based on userRole
-  const cardBg = isAdmin 
-    ? "bg-slate-900 border-slate-800 text-white" 
-    : "bg-white border-slate-200 text-slate-900";
+  const filteredRequests = requests.filter((r) => {
+    if (statusFilter === "all") return true;
+    return r.status === statusFilter;
+  });
 
-  const tableHeaderBg = isAdmin ? "bg-slate-800/80 text-slate-400" : "bg-slate-50 text-slate-500";
-  const rowHoverBg = isAdmin ? "hover:bg-slate-800/40" : "hover:bg-slate-50/50";
-  const dividerColor = isAdmin ? "divide-slate-800" : "divide-slate-100";
-  const inputBg = isAdmin 
-    ? "bg-slate-800 border-slate-700 text-white placeholder:text-slate-500" 
-    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400";
+  // Dynamic Theme Styling
+  const cardBg = isAdmin
+    ? "bg-[#111726]/90 border-slate-800 text-slate-100 backdrop-blur-md"
+    : "bg-white border-slate-200/90 text-slate-900 shadow-xs";
+
+  const inputBg = isAdmin
+    ? "bg-slate-900/80 border-slate-700/80 text-white placeholder:text-slate-500 focus:border-cyan-500"
+    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-blue-500";
 
   return (
-    <div className="space-y-6">
-      {/* Leave Quota Balances */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {balances.map((b) => (
-          <div key={b.leaveTypeId} className={`p-4 rounded-2xl border shadow-xs ${cardBg}`}>
-            <span className={`text-[11px] font-semibold ${isAdmin ? "text-slate-400" : "text-slate-500"}`}>{b.displayName}</span>
-            <div className="mt-1 text-2xl font-bold">
-              {b.remaining} {b.name === "unpaid" ? "" : "days"}
+    <div className="space-y-6 animate-fade-in-up">
+      {/* 1. LEAVE QUOTA BALANCES BENTO */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        {balances.map((b) => {
+          const quota = b.quota || 14;
+          const remaining = b.remaining || 0;
+          const pct = Math.min(Math.round((remaining / quota) * 100), 100);
+
+          return (
+            <div
+              key={b.leaveTypeId}
+              className={`p-4 sm:p-5 rounded-2xl border transition-all duration-300 hover:-translate-y-1 ${cardBg}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider truncate">
+                  {b.displayName}
+                </span>
+                <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-full">
+                  {b.name === "unpaid" ? "Flex" : `${quota}d Quota`}
+                </span>
+              </div>
+              <div className="mt-2 text-2xl sm:text-3xl font-black tracking-tight">
+                {b.remaining}{" "}
+                <span className="text-xs font-normal text-slate-400">
+                  {b.name === "unpaid" ? "" : "days"}
+                </span>
+              </div>
+              <div className="mt-3 h-1.5 w-full bg-slate-800/20 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <p className="mt-2 text-[10px] text-slate-400 flex justify-between">
+                <span>Used: {b.used}d</span>
+                <span>Remaining: {b.remaining}d</span>
+              </p>
             </div>
-            <p className={`mt-1 text-[10px] ${isAdmin ? "text-slate-500" : "text-slate-400"}`}>
-              Used: {b.used} / Quota: {b.quota || "Unlimited"}
+          );
+        })}
+      </div>
+
+      {/* 2. AI SMART LEAVE COPILOT & SUBMIT */}
+      <div
+        className={`relative overflow-hidden rounded-3xl border p-5 sm:p-6 transition-all shadow-lg ${
+          isAdmin
+            ? "border-cyan-500/30 bg-gradient-to-br from-[#0D1527] via-[#101C35] to-[#0A0E1A] text-white"
+            : "border-blue-200 bg-gradient-to-br from-blue-50 via-indigo-50/70 to-white text-slate-900"
+        }`}
+      >
+        {/* Glowing aura */}
+        <div className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-cyan-500/15 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-blue-500/20">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-600/15 text-blue-500 border border-blue-500/30">
+              <Sparkles className="h-3.5 w-3.5 text-blue-400 animate-spin" style={{ animationDuration: "4s" }} />
+              <span>AI Leave Copilot & Auto-Submit</span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-extrabold mt-1.5 tracking-tight">
+              Natural Language Leave Submission
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Type in plain English or Roman Urdu. AI extracts leave category, dates, working day math, and can auto-submit directly!
             </p>
           </div>
-        ))}
+
+          <span className="text-[11px] font-mono font-medium text-slate-400 bg-slate-800/40 px-3 py-1 rounded-lg border border-slate-700/50 self-start md:self-auto">
+            Bilingual: EN / Roman Urdu Supported
+          </span>
+        </div>
+
+        {/* Quick Suggestion Chips */}
+        <div className="relative z-10 mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-semibold text-slate-400">Quick AI Prompts:</span>
+          {quickTemplates.map((item, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => {
+                setSmartPrompt(item.prompt);
+                handleSmartLeaveParse(item.prompt);
+              }}
+              className="text-xs font-medium px-3 py-1 rounded-xl bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:text-blue-500 transition-all hover:-translate-y-0.5 active:scale-95"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Natural Language Input Deck */}
+        <div className="relative z-10 mt-4 flex flex-col sm:flex-row gap-2.5">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="e.g. 'Need 2 days off next Monday and Tuesday for sister wedding' or 'Mujhe kal doctor appointment ke liye sick leave chahiye'..."
+              value={smartPrompt}
+              onChange={(e) => setSmartPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSmartLeaveParse();
+                }
+              }}
+              className={`w-full rounded-2xl border px-4 py-3 text-xs outline-none transition-all shadow-inner ${inputBg}`}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleSmartLeaveParse()}
+              disabled={parsingSmart || !smartPrompt.trim()}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>{parsingSmart ? "Parsing..." : "Pre-fill Form"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleInstantAiSubmit()}
+              disabled={autoSubmitting || !smartPrompt.trim()}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-5 py-3 text-xs font-extrabold shadow-md shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-50"
+            >
+              <Zap className="h-4 w-4 text-emerald-200" />
+              <span>{autoSubmitting ? "Submitting..." : "⚡ AI Auto-Submit"}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Smart Leave Prompt Box (Employee self-service NLP) */}
-      <div className={`p-5 rounded-2xl border shadow-xs ${isAdmin ? "bg-slate-900 border-slate-800 text-white" : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-slate-900"}`}>
-        <div className={`flex items-center gap-2 mb-2 text-xs font-bold ${isAdmin ? "text-blue-400" : "text-blue-900"}`}>
-          <Sparkles className="h-4 w-4 text-blue-500" />
-          <span>Smart Leave Assistant (Natural Language: English & Roman Urdu)</span>
-        </div>
-        <p className={`text-xs mb-3 ${isAdmin ? "text-slate-400" : "text-slate-600"}`}>
-          Type your leave in plain words (e.g. &ldquo;Need next Monday and Tuesday off for sister&apos;s wedding&rdquo; or &ldquo;Mujhe 2 din ki casual chutti chahiye&rdquo;). The AI will automatically pre-fill your form!
-        </p>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Type your leave request in plain words..."
-            value={smartPrompt}
-            onChange={(e) => setSmartPrompt(e.target.value)}
-            className={`flex-1 rounded-xl border px-3 py-2 text-xs outline-none focus:border-blue-500 ${inputBg}`}
-          />
-          <button
-            type="button"
-            onClick={handleSmartLeaveParse}
-            disabled={parsingSmart || !smartPrompt.trim()}
-            className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50"
-          >
-            {parsingSmart ? "Parsing..." : "Pre-fill Form"}
-          </button>
-        </div>
-      </div>
+      {/* 3. LEAVE APPLICATION FORM */}
+      <div
+        className={`p-6 rounded-3xl border transition-all duration-300 ${cardBg} ${
+          aiHighlight ? "ring-2 ring-blue-500 shadow-xl" : ""
+        }`}
+      >
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+              <Calendar className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold">Standard Leave Application Form</h3>
+              <p className="text-[11px] text-slate-400">Review parameters or submit custom dates</p>
+            </div>
+          </div>
 
-      {/* Apply Leave Form */}
-      <div className={`p-6 rounded-2xl border shadow-xs space-y-4 ${cardBg}`}>
-        <div className={`flex items-center gap-2 border-b pb-2 ${isAdmin ? "border-slate-800" : "border-slate-100"}`}>
-          <Calendar className="h-4 w-4 text-blue-500" />
-          <h3 className="text-sm font-bold">Apply for Leave</h3>
+          {aiHighlight && (
+            <span className="text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 animate-pulse">
+              ✨ Pre-filled by AI
+            </span>
+          )}
         </div>
 
         {applySuccess && (
-          <div className={`flex items-center gap-2 rounded-xl p-3 text-xs border ${isAdmin ? "bg-emerald-950/40 text-emerald-400 border-emerald-900" : "bg-emerald-50 text-emerald-600 border-emerald-200"}`}>
+          <div className="mt-4 flex items-center gap-2 rounded-2xl p-3.5 text-xs font-medium border bg-emerald-500/10 text-emerald-500 border-emerald-500/30 animate-fade-in-up">
             <CheckCircle className="h-4 w-4 shrink-0" />
             <span>{applySuccess}</span>
           </div>
         )}
 
         {applyError && (
-          <div className={`flex items-center gap-2 rounded-xl p-3 text-xs border ${isAdmin ? "bg-red-950/40 text-red-400 border-red-900" : "bg-red-50 text-red-600 border-red-200"}`}>
+          <div className="mt-4 flex items-center gap-2 rounded-2xl p-3.5 text-xs font-medium border bg-rose-500/10 text-rose-500 border-rose-500/30 animate-fade-in-up">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <span>{applyError}</span>
           </div>
         )}
 
-        <form onSubmit={handleApply} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <form onSubmit={handleApply} className="mt-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             <div>
-              <label className={`block text-xs font-semibold mb-1 ${isAdmin ? "text-slate-300" : "text-slate-700"}`}>
+              <label className="block text-xs font-semibold mb-1 text-slate-400">
                 Leave Category
               </label>
               <select
                 required
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className={`w-full rounded-xl border px-3 py-2 text-xs outline-none focus:border-blue-500 ${inputBg}`}
+                className={`w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${inputBg}`}
               >
                 {balances.length > 0 ? (
                   balances.map((b) => (
                     <option key={b.leaveTypeId} value={b.leaveTypeId}>
-                      {b.displayName} ({b.remaining} days left)
+                      {b.displayName} ({b.remaining}d remaining)
                     </option>
                   ))
                 ) : leaveTypes.length > 0 ? (
                   leaveTypes.map((t) => (
                     <option key={t._id} value={t._id}>
-                      {t.displayName} ({t.yearlyQuota} days quota)
+                      {t.displayName} ({t.yearlyQuota}d quota)
                     </option>
                   ))
                 ) : (
                   <>
-                    <option value="annual">Annual Leave (14 days)</option>
-                    <option value="sick">Sick Leave (8 days)</option>
-                    <option value="casual">Casual Leave (10 days)</option>
+                    <option value="annual">Annual Leave</option>
+                    <option value="sick">Sick Leave</option>
+                    <option value="casual">Casual Leave</option>
                     <option value="unpaid">Unpaid Leave</option>
                   </>
                 )}
@@ -246,7 +417,7 @@ export default function LeaveManagementView({ userRole }: LeaveProps) {
             </div>
 
             <div>
-              <label className={`block text-xs font-semibold mb-1 ${isAdmin ? "text-slate-300" : "text-slate-700"}`}>
+              <label className="block text-xs font-semibold mb-1 text-slate-400">
                 Start Date
               </label>
               <input
@@ -254,12 +425,12 @@ export default function LeaveManagementView({ userRole }: LeaveProps) {
                 required
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className={`w-full rounded-xl border px-3 py-1.5 text-xs outline-none focus:border-blue-500 ${inputBg}`}
+                className={`w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${inputBg}`}
               />
             </div>
 
             <div>
-              <label className={`block text-xs font-semibold mb-1 ${isAdmin ? "text-slate-300" : "text-slate-700"}`}>
+              <label className="block text-xs font-semibold mb-1 text-slate-400">
                 End Date
               </label>
               <input
@@ -267,154 +438,175 @@ export default function LeaveManagementView({ userRole }: LeaveProps) {
                 required
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className={`w-full rounded-xl border px-3 py-1.5 text-xs outline-none focus:border-blue-500 ${inputBg}`}
+                className={`w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${inputBg}`}
               />
             </div>
           </div>
 
           <div>
-            <label className={`block text-xs font-semibold mb-1 ${isAdmin ? "text-slate-300" : "text-slate-700"}`}>
-              Reason for Absence
+            <label className="block text-xs font-semibold mb-1 text-slate-400">
+              Reason / Justification
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. Family wedding, fever & doctor appointment..."
+              placeholder="e.g. Family wedding ceremony, severe flu & doctor rest..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className={`w-full rounded-xl border px-3 py-2 text-xs outline-none focus:border-blue-500 ${inputBg}`}
+              className={`w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${inputBg}`}
             />
           </div>
 
-          <div className="flex justify-between items-center pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
             <span className="text-[11px] text-slate-400">
-              * Automatically skips weekends and public holidays. Overlaps are strictly checked.
+              * Overlaps with prior leaves are blocked automatically. Excludes weekends & designated public holidays.
             </span>
             <button
               type="submit"
               disabled={applying}
-              className="rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-6 py-2.5 text-xs font-bold text-white transition-all shadow-md active:scale-95 disabled:opacity-50"
             >
-              {applying ? "Submitting..." : "Submit Leave Request"}
+              <Send className="h-3.5 w-3.5" />
+              <span>{applying ? "Submitting..." : "Submit Leave Application"}</span>
             </button>
           </div>
         </form>
       </div>
 
-      {/* Leave Requests & HR Approval Inbox */}
-      <div className={`rounded-2xl border shadow-xs overflow-hidden ${cardBg}`}>
-        <div className={`p-4 border-b flex justify-between items-center ${isAdmin ? "border-slate-800" : "border-slate-100"}`}>
-          <h3 className="text-sm font-bold">
-            {isHRorAdmin ? "Leave Approval Inbox & Applications" : "My Leave History"}
-          </h3>
-          <span className="text-xs text-slate-400">{requests.length} Requests</span>
+      {/* 4. LEAVE REQUESTS INBOX & HISTORY */}
+      <div className={`rounded-3xl border overflow-hidden ${cardBg}`}>
+        <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold">
+              {isHRorAdmin ? "Leave Approval Inbox & Management" : "My Leave History & Status"}
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              {filteredRequests.length} total applications shown
+            </p>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+            {(["all", "pending", "approved", "rejected"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setStatusFilter(tab)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                  statusFilter === tab
+                    ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className={`border-b ${isAdmin ? "border-slate-800" : "border-slate-200"} ${tableHeaderBg}`}>
+            <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-slate-400">
               <tr>
-                <th className="p-3">Employee</th>
-                <th className="p-3">Type</th>
-                <th className="p-3">Duration</th>
-                <th className="p-3">Dates</th>
-                <th className="p-3">Reason</th>
-                <th className="p-3">Status</th>
-                <th className="p-3 text-right">Actions</th>
+                <th className="p-3.5">Employee</th>
+                <th className="p-3.5">Leave Category</th>
+                <th className="p-3.5">Duration</th>
+                <th className="p-3.5">Dates</th>
+                <th className="p-3.5">Reason</th>
+                <th className="p-3.5">Status</th>
+                <th className="p-3.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className={`divide-y ${dividerColor}`}>
-              {requests.length === 0 ? (
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+              {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-400">
-                    No leave requests found.
+                  <td colSpan={7} className="text-center py-12 text-slate-400">
+                    No leave requests found under &apos;{statusFilter}&apos;.
                   </td>
                 </tr>
               ) : (
-                requests.map((r) => (
-                  <tr key={r._id} className={`${rowHoverBg} transition-colors`}>
-                    <td className="p-3 font-semibold">
-                      {r.employee ? `${r.employee.firstName} ${r.employee.lastName}` : "Self"}
-                    </td>
-                    <td className={`p-3 font-medium ${isAdmin ? "text-slate-300" : "text-slate-700"}`}>
-                      {r.leaveType?.displayName}
-                    </td>
-                    <td className="p-3 font-bold text-blue-500">
-                      {r.workingDays} working day(s)
-                    </td>
-                    <td className="p-3 font-mono text-[11px] text-slate-400">
-                      {r.startDate} → {r.endDate}
-                    </td>
-                    <td className={`p-3 max-w-xs truncate ${isAdmin ? "text-slate-300" : "text-slate-600"}`}>
-                      {r.reason}
-                    </td>
-                    <td className="p-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        r.status === "approved"
-                          ? (isAdmin ? "bg-emerald-950 text-emerald-300 border border-emerald-900" : "bg-emerald-100 text-emerald-800")
-                          : r.status === "pending"
-                          ? (isAdmin ? "bg-amber-950 text-amber-300 border border-amber-900" : "bg-amber-100 text-amber-800")
-                          : (isAdmin ? "bg-red-950 text-red-300 border border-red-900" : "bg-red-100 text-red-800")
-                      }`}>
-                        {r.status?.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right space-x-1.5">
-                      {isHRorAdmin && r.status === "pending" ? (
-                        <button
-                          onClick={() => setActiveReviewId(r._id)}
-                          className="px-2.5 py-1 rounded bg-blue-600 text-white font-semibold text-[11px] hover:bg-blue-700"
-                        >
-                          Review Inbox
-                        </button>
-                      ) : r.status === "pending" ? (
-                        <button
-                          onClick={() => handleCancelLeave(r._id)}
-                          className={`px-2.5 py-1 rounded text-[11px] ${isAdmin ? "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
-                        >
-                          Cancel
-                        </button>
-                      ) : (
-                        <span className="text-slate-400 text-[11px]">Decided</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                filteredRequests.map((r) => {
+                  const isPending = r.status === "pending";
+                  const isApproved = r.status === "approved";
+                  const isRejected = r.status === "rejected";
+
+                  return (
+                    <tr key={r._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="p-3.5 font-semibold">
+                        {r.employee ? `${r.employee.firstName} ${r.employee.lastName}` : "Self"}
+                        <span className="block text-[10px] text-slate-400 font-mono">
+                          {r.employee?.employeeCode}
+                        </span>
+                      </td>
+                      <td className="p-3.5 font-medium">
+                        {r.leaveType?.displayName}
+                      </td>
+                      <td className="p-3.5 font-bold text-blue-500">
+                        {r.workingDays} day(s)
+                      </td>
+                      <td className="p-3.5 font-mono text-[11px] text-slate-400">
+                        {r.startDate} → {r.endDate}
+                      </td>
+                      <td className="p-3.5 max-w-xs truncate text-slate-500 dark:text-slate-400" title={r.reason}>
+                        {r.reason}
+                      </td>
+                      <td className="p-3.5">
+                        {isPending && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                            <Clock className="h-3 w-3 animate-pulse" /> Pending
+                          </span>
+                        )}
+                        {isApproved && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                            <Check className="h-3 w-3" /> Approved
+                          </span>
+                        )}
+                        {isRejected && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                            <X className="h-3 w-3" /> Rejected
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3.5 text-right">
+                        {isHRorAdmin && isPending ? (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => {
+                                setActiveReviewId(r._id);
+                                handleReviewLeave("approved");
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow-xs"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => {
+                                setActiveReviewId(r._id);
+                                handleReviewLeave("rejected");
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] transition shadow-xs"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : isPending ? (
+                          <button
+                            onClick={() => handleCancelLeave(r._id)}
+                            className="text-slate-400 hover:text-rose-500 font-semibold text-[11px] transition"
+                          >
+                            Cancel
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-mono">Finalized</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
-
-      {/* HR / Admin Review Modal */}
-      {activeReviewId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-800 p-5 shadow-2xl text-white space-y-3">
-            <h4 className="text-sm font-bold mb-2">Review Leave Application</h4>
-            <textarea
-              rows={3}
-              placeholder="Approval / Rejection comment..."
-              value={reviewComment}
-              onChange={(e) => setReviewComment(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800 p-2 text-xs text-white placeholder:text-slate-500 mb-4 outline-none focus:border-slate-500"
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleReviewLeave("rejected")}
-                className="flex-1 rounded-xl bg-red-600 py-2 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
-              >
-                Reject Leave
-              </button>
-              <button
-                onClick={() => handleReviewLeave("approved")}
-                className="flex-1 rounded-xl bg-emerald-600 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors"
-              >
-                Approve Leave
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
