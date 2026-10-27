@@ -34,6 +34,7 @@ export const hcmApi = {
   registerEmployee: (data: any) => api.post("/employees", data).then((r) => r.data),
   registerEmployeePublic: (data: any) => api.post("/auth/register-employee", data).then((r) => r.data),
   confirmEmployee: (id: string) => api.patch(`/employees/${id}/confirm`).then((r) => r.data),
+  deleteEmployee: (id: string) => api.delete(`/employees/${id}`).then((r) => r.data),
   getEmployee360: (id: string) => api.get(`/employees/${id}/360`).then((r) => r.data),
   updateEmployee: (id: string, data: any) => api.put(`/employees/${id}`, data).then((r) => r.data),
   updateSelfProfile: (data: any) => api.patch("/employees/self", data).then((r) => r.data),

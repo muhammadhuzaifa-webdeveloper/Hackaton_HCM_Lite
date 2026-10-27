@@ -17,6 +17,10 @@ import {
   Globe2,
   PieChart,
   RefreshCw,
+  UserCheck,
+  UserX,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function AdminDashboardView() {
@@ -25,16 +29,52 @@ export default function AdminDashboardView() {
   const [summary, setSummary] = useState<string[] | null>(null);
   const [summarizing, setSummarizing] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
+  const [pendingEmployees, setPendingEmployees] = useState<any[]>([]);
+  const [actionMsg, setActionMsg] = useState("");
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await hcmApi.getAdminDashboard();
+      const [res, pendingRes] = await Promise.all([
+        hcmApi.getAdminDashboard(),
+        hcmApi.getEmployees({ status: "pending_approval" }).catch(() => ({ employees: [] })),
+      ]);
       setData(res);
+      setPendingEmployees(pendingRes.employees || []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveEmployee = async (id: string, name: string) => {
+    setActionLoadingId(id);
+    setActionMsg("");
+    try {
+      await hcmApi.confirmEmployee(id);
+      setActionMsg(`Account for ${name} has been approved and activated successfully!`);
+      loadData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to confirm employee.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleRejectEmployee = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to reject the registration for ${name}?`)) return;
+    setActionLoadingId(id);
+    setActionMsg("");
+    try {
+      await hcmApi.deleteEmployee(id);
+      setActionMsg(`Registration for ${name} rejected.`);
+      loadData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to reject employee.");
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -164,6 +204,93 @@ export default function AdminDashboardView() {
           </div>
         )}
       </div>
+
+      {/* ACTION FEEDBACK ALERT */}
+      {actionMsg && (
+        <div className="flex items-center gap-2 rounded-2xl p-4 bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-xs font-medium animate-fade-in-up shadow-lg">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>{actionMsg}</span>
+        </div>
+      )}
+
+      {/* PENDING EMPLOYEE ENROLLMENT APPROVALS (EXCLUSIVE TO MASTER ADMIN) */}
+      {pendingEmployees.length > 0 && (
+        <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-r from-amber-950/30 via-[#181E2E] to-slate-900/90 p-5 backdrop-blur-md animate-fade-in-up shadow-xl shadow-amber-950/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-500/20">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                <AlertCircle className="h-5 w-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white flex items-center gap-2">
+                  Action Required: Pending Employee Registrations
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    {pendingEmployees.length} Awaiting Authorization
+                  </span>
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  New employee accounts created via self-enrollment requiring Master Admin confirmation.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 divide-y divide-slate-800/60">
+            {pendingEmployees.map((emp) => (
+              <div
+                key={emp._id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 hover:bg-slate-800/20 px-2 rounded-xl transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 font-bold text-xs text-cyan-400 border border-slate-700">
+                    {emp.firstName?.[0] || "E"}
+                    {emp.lastName?.[0] || ""}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-2">
+                      <span>{emp.firstName} {emp.lastName}</span>
+                      <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/40">
+                        {emp.employeeCode}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                      <span>{emp.email}</span>
+                      <span>·</span>
+                      <span>{emp.department?.name || "General"}</span>
+                      {emp.phone && (
+                        <>
+                          <span>·</span>
+                          <span>{emp.phone}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  <button
+                    onClick={() => handleApproveEmployee(emp._id, `${emp.firstName} ${emp.lastName}`)}
+                    disabled={actionLoadingId === emp._id}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md shadow-emerald-950/30 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <UserCheck className="h-3.5 w-3.5" />
+                    <span>{actionLoadingId === emp._id ? "Activating..." : "Accept & Activate"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleRejectEmployee(emp._id, `${emp.firstName} ${emp.lastName}`)}
+                    disabled={actionLoadingId === emp._id}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 text-slate-400 font-semibold text-xs border border-slate-700 hover:border-rose-800 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <UserX className="h-3.5 w-3.5" />
+                    <span>Reject</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 2. CORE TELEMETRY METRIC TILES */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
