@@ -23,7 +23,7 @@ On the Sign-In page (`http://localhost:3000/login`), quick-fill buttons are prov
 
 | Role | Email | Password | Access Scope |
 |---|---|---|---|
-| **Admin** | `admin@saylani.com` | `Admin@12345` | Company setup, Office rules, Lock payroll, Immutable audit log, All company AI |
+| **Admin** | `muhammadhuzaifa22056@gmail.com` | `Cycle@#$500` | Company setup, Office rules, Lock payroll, Immutable audit log, All company AI |
 | **HR** | `hr@saylani.com` | `Password@123` | Register employees, Leave approval inbox, Attendance board, Monthly payroll draft |
 | **Employee** | `ali@saylani.com` | `Password@123` | Web/Camera check-in, Smart leave form, Download PDF payslips, Own profile 360° |
 

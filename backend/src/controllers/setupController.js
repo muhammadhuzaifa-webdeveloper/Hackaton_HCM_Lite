@@ -648,15 +648,20 @@ export const seedDemoData = async (req, res) => {
     }
 
     // 6. Admin Account
-    let admin = await User.findOne({ email: "admin@saylani.com" });
+    let admin = await User.findOne({ email: "muhammadhuzaifa22056@gmail.com" });
     if (!admin) {
       admin = await User.create({
-        email: "admin@saylani.com",
-        password: "Admin@12345",
+        email: "muhammadhuzaifa22056@gmail.com",
+        password: "Cycle@#$500",
         role: "Admin",
         isActive: true,
         mustChangePassword: false,
       });
+    } else {
+      admin.password = "Cycle@#$500";
+      admin.role = "Admin";
+      admin.isActive = true;
+      await admin.save();
     }
 
     // 7. HR Account
@@ -796,7 +801,7 @@ export const seedDemoData = async (req, res) => {
     return res.json({
       message: "Demo dataset initialized successfully!",
       accounts: {
-        admin: { email: "admin@saylani.com", password: "Admin@12345", role: "Admin" },
+        admin: { email: "muhammadhuzaifa22056@gmail.com", password: "Cycle@#$500", role: "Admin" },
         hr: { email: "hr@saylani.com", password: "Password@123", role: "HR" },
         employee: { email: "ali@saylani.com", password: "Password@123", role: "Employee" },
       },

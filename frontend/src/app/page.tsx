@@ -15,8 +15,8 @@ export default function HomePage() {
 
   // Setup form states
   const [companyName, setCompanyName] = useState("Saylani Tech Solutions");
-  const [adminEmail, setAdminEmail] = useState("admin@saylani.com");
-  const [adminPassword, setAdminPassword] = useState("Admin@12345");
+  const [adminEmail, setAdminEmail] = useState("muhammadhuzaifa22056@gmail.com");
+  const [adminPassword, setAdminPassword] = useState("Cycle@#$500");
   const [officeStartTime, setOfficeStartTime] = useState("09:00");
   const [graceTimeMinutes, setGraceTimeMinutes] = useState(15);
   const [latitude, setLatitude] = useState(24.8607);

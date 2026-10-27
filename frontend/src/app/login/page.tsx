@@ -100,6 +100,8 @@ export default function LoginPage() {
       setRegPassword("");
       setRegPhone("");
       setRegAddress("");
+      setEmail("");
+      setPassword("");
     } catch (err: any) {
       setRegError(err.response?.data?.message || "Registration failed. Please check your details.");
     } finally {
@@ -156,6 +158,8 @@ export default function LoginPage() {
                 onClick={() => {
                   setMode("register");
                   setRegError("");
+                  setEmail("");
+                  setPassword("");
                 }}
                 className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition flex items-center justify-center gap-1.5 ${
                   mode === "register"
@@ -258,6 +262,8 @@ export default function LoginPage() {
                     onClick={() => {
                       setMode("login");
                       setRegSuccess("");
+                      setEmail("");
+                      setPassword("");
                     }}
                     className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition"
                   >
@@ -402,7 +408,7 @@ export default function LoginPage() {
           <div className="grid grid-cols-1 gap-2.5">
             {/* 1. Admin */}
             <div
-              onClick={() => handleQuickLogin("admin@saylani.com", "Admin@12345")}
+              onClick={() => handleQuickLogin("muhammadhuzaifa22056@gmail.com", "Cycle@#$500")}
               className="group flex items-center justify-between p-3 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-100/60 dark:border-purple-900/60 dark:bg-purple-950/30 dark:hover:bg-purple-900/40 cursor-pointer transition"
             >
               <div className="flex items-center gap-3">
@@ -417,7 +423,7 @@ export default function LoginPage() {
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                    <span className="font-mono font-medium">admin@saylani.com</span> · Pass: <span className="font-mono">Admin@12345</span>
+                    <span className="font-mono font-medium">muhammadhuzaifa22056@gmail.com</span> · Pass: <span className="font-mono">Cycle@#$500</span>
                   </p>
                   <p className="text-[10px] text-purple-700 dark:text-purple-300 mt-0.5">
                     Org Setup · Lock Payroll · Audit Log · All Company Data AI
