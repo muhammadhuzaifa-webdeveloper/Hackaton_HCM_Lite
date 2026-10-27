@@ -9,17 +9,32 @@ try {
   // ignore if in restricted environment
 }
 
+let cachedConnection = null;
+
 const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return mongoose.connection;
+  }
+  if (cachedConnection) {
+    return cachedConnection;
+  }
   try {
     const mongoUri =
       process.env.MONGO_URI ||
       process.env.MONGODB_URI ||
       "mongodb://127.0.0.1:27017/hcm_lite";
-    const conn = await mongoose.connect(mongoUri);
+    const conn = await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 8000,
+    });
+    cachedConnection = conn;
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return conn;
   } catch (error) {
     console.error(`MongoDB connection error: ${error.message}`);
-    process.exit(1);
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
+    throw error;
   }
 };
 

@@ -42,6 +42,24 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
+// Ensure database is connected for serverless invocations
+app.use(async (_req, _res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Root welcome & health route
+app.get("/", (_req, res) => {
+  res.json({
+    message: "HCM Lite Backend API is running successfully!",
+    health: "/api/health",
+  });
+});
+
 // Mount API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/setup", setupRoutes);
@@ -70,8 +88,12 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`HCM Lite Backend running on http://localhost:${PORT}`);
+if (!process.env.VERCEL) {
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`HCM Lite Backend running on http://localhost:${PORT}`);
+    });
   });
-});
+}
+
+export default app;
