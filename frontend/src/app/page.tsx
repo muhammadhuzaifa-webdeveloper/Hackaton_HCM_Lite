@@ -40,7 +40,7 @@ export default function HomePage() {
           }
         }
       } catch (err) {
-        console.error("Setup check error:", err);
+        console.warn("Setup check error:", err);
         setIsSetup(false);
       } finally {
         setCheckingSetup(false);

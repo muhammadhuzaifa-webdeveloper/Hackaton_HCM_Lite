@@ -41,12 +41,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await authApi.me();
       setUser(data.user);
     } catch (err: any) {
-      console.error("Auth fetch failed:", err);
-      if (err.response?.status === 401 && typeof window !== "undefined") {
-        localStorage.removeItem("accessToken");
-        sessionStorage.removeItem("accessToken");
-        document.cookie = "accessToken=; path=/; max-age=0";
+      if (err.response?.status === 401) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("accessToken");
+          sessionStorage.removeItem("accessToken");
+          document.cookie = "accessToken=; path=/; max-age=0";
+        }
         setUser(null);
+      } else {
+        console.warn("Auth fetch failed:", err?.message || err);
       }
     } finally {
       setLoading(false);
