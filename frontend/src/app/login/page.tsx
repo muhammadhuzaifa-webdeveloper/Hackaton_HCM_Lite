@@ -406,70 +406,72 @@ export default function LoginPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {/* 1. Demo HR */}
+            {/* 1. Admin */}
+            <div
+              onClick={() => handleQuickLogin("muhammadhuzaifa22056@gmail.com", "Cycle@#$500")}
+              className="group flex flex-col justify-between p-3.5 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-100/60 dark:border-purple-900/60 dark:bg-purple-950/30 dark:hover:bg-purple-900/40 cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-600 text-white shadow-xs">
+                  <Shield className="h-3.5 w-3.5" />
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                  Master Admin
+                </span>
+              </div>
+              <div className="mt-2.5">
+                <span className="text-xs font-bold text-slate-900 dark:text-white block">Executive Command</span>
+                <p className="text-[11px] font-mono text-slate-600 dark:text-slate-400 mt-0.5 truncate" title="muhammadhuzaifa22056@gmail.com">
+                  muhammadhuzaifa22056@gmail.com
+                </p>
+                <p className="text-[10px] text-purple-700 dark:text-purple-300 font-mono mt-0.5">Pass: Cycle@#$500</p>
+              </div>
+            </div>
+
+            {/* 2. HR */}
             <div
               onClick={() => handleQuickLogin("hr@saylani.com", "Password@123")}
-              className="group flex flex-col justify-between p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100/60 dark:border-blue-900/60 dark:bg-blue-950/30 dark:hover:bg-blue-900/40 cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95"
+              className="group flex flex-col justify-between p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100/60 dark:border-blue-900/60 dark:bg-blue-950/30 dark:hover:bg-blue-900/40 cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 shadow-xs"
             >
               <div className="flex items-center justify-between">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
                   <Users className="h-3.5 w-3.5" />
                 </div>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                  Demo HR
+                  HR Portal
                 </span>
               </div>
               <div className="mt-2.5">
-                <span className="text-xs font-bold text-slate-900 dark:text-white block">HR Operations</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white block">People Operations</span>
                 <p className="text-[11px] font-mono text-slate-600 dark:text-slate-400 mt-0.5">hr@saylani.com</p>
-                <p className="text-[10px] text-slate-500 font-mono">Pass: Password@123</p>
+                <p className="text-[10px] text-blue-700 dark:text-blue-300 font-mono mt-0.5">Pass: Password@123</p>
               </div>
             </div>
 
-            {/* 2. Demo Employee 1 (Ali Khan) */}
+            {/* 3. Employee (Ali Khan) */}
             <div
               onClick={() => handleQuickLogin("ali@saylani.com", "Password@123")}
-              className="group flex flex-col justify-between p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/60 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95"
+              className="group flex flex-col justify-between p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/60 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 shadow-xs"
             >
               <div className="flex items-center justify-between">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
                   <User className="h-3.5 w-3.5" />
                 </div>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                  Demo Staff
+                  Employee
                 </span>
               </div>
               <div className="mt-2.5">
-                <span className="text-xs font-bold text-slate-900 dark:text-white block">Ali Khan (Eng)</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white block">Ali Khan (Self-Service)</span>
                 <p className="text-[11px] font-mono text-slate-600 dark:text-slate-400 mt-0.5">ali@saylani.com</p>
-                <p className="text-[10px] text-slate-500 font-mono">Pass: Password@123</p>
-              </div>
-            </div>
-
-            {/* 3. Demo Employee 2 (Sara Ahmed) */}
-            <div
-              onClick={() => handleQuickLogin("sara@saylani.com", "Password@123")}
-              className="group flex flex-col justify-between p-3.5 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-100/60 dark:border-purple-900/60 dark:bg-purple-950/30 dark:hover:bg-purple-900/40 cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-600 text-white shadow-xs">
-                  <User className="h-3.5 w-3.5" />
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                  Demo Staff
-                </span>
-              </div>
-              <div className="mt-2.5">
-                <span className="text-xs font-bold text-slate-900 dark:text-white block">Sara Ahmed (HR)</span>
-                <p className="text-[11px] font-mono text-slate-600 dark:text-slate-400 mt-0.5">sara@saylani.com</p>
-                <p className="text-[10px] text-slate-500 font-mono">Pass: Password@123</p>
+                <p className="text-[10px] text-emerald-700 dark:text-emerald-300 font-mono mt-0.5">Pass: Password@123</p>
               </div>
             </div>
           </div>
 
           <div className="mt-3.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
             <p className="text-[11px] text-slate-500">
-              * Master Admin account is private and not exposed in demo switcher. Sign in with Master Admin credentials above.
+              * Click any card above to instantly log in as Admin, HR, or Employee.
             </p>
           </div>
         </div>
