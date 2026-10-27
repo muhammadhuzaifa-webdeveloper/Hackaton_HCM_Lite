@@ -16,7 +16,7 @@ export function getTodayDateStr(date = new Date()) {
 }
 
 // Helper to get or auto-link an Employee record for any user role (including Admin/HR)
-const getOrEnsureEmployeeId = async (user) => {
+export const getOrEnsureEmployeeId = async (user) => {
   if (user?.employeeId) return user.employeeId;
   const userId = user?.userId || user?._id;
   let emp = await Employee.findOne({ $or: [{ user: userId }, { email: user?.email }] });
@@ -46,11 +46,17 @@ const getOrEnsureEmployeeId = async (user) => {
 export const getMyTodayStatus = async (req, res) => {
   try {
     const employeeId = await getOrEnsureEmployeeId(req.user);
+    const todayStr = getTodayDateStr();
+
     if (!employeeId) {
-      return res.status(400).json({ message: "No employee profile found for user." });
+      return res.json({
+        date: todayStr,
+        attendance: null,
+        isCheckedIn: false,
+        isCheckedOut: false,
+      });
     }
 
-    const todayStr = getTodayDateStr();
     const attendance = await Attendance.findOne({ employee: employeeId, date: todayStr }).lean();
 
     return res.json({

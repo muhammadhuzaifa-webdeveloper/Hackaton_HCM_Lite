@@ -37,10 +37,10 @@ export default function HRDashboardView({ onNavigateTab = () => {} }: HRDashboar
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await hcmApi.getHRDashboard();
-      setData(res);
-    } catch (err) {
-      console.error(err);
+      const res = await hcmApi.getHRDashboard().catch(() => ({}));
+      setData(res || {});
+    } catch {
+      // safe graceful fallback
     } finally {
       setLoading(false);
     }

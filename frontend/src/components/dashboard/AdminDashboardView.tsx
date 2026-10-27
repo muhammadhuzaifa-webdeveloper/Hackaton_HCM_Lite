@@ -37,13 +37,13 @@ export default function AdminDashboardView() {
     setLoading(true);
     try {
       const [res, pendingRes] = await Promise.all([
-        hcmApi.getAdminDashboard(),
+        hcmApi.getAdminDashboard().catch(() => ({})),
         hcmApi.getEmployees({ status: "pending_approval" }).catch(() => ({ employees: [] })),
       ]);
-      setData(res);
+      setData(res || {});
       setPendingEmployees(pendingRes.employees || []);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // safe graceful fallback
     } finally {
       setLoading(false);
     }

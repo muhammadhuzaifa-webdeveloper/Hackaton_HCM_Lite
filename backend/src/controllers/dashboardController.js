@@ -7,7 +7,7 @@ import PayrollRun from "../models/PayrollRun.js";
 import Department from "../models/Department.js";
 import AuditLog from "../models/AuditLog.js";
 import Announcement from "../models/Announcement.js";
-import { getTodayDateStr } from "./attendanceController.js";
+import { getTodayDateStr, getOrEnsureEmployeeId } from "./attendanceController.js";
 import { getEmployeeLeaveBalances } from "./leaveController.js";
 
 // 1. Admin Dashboard Metrics (Server Aggregations)
@@ -215,8 +215,18 @@ export const getHRDashboard = async (req, res) => {
 // 3. Employee Dashboard Metrics (Self-service)
 export const getEmployeeDashboard = async (req, res) => {
   try {
-    const employeeId = req.user.employeeId;
-    if (!employeeId) return res.status(400).json({ message: "No employee profile found." });
+    const employeeId = await getOrEnsureEmployeeId(req.user);
+    if (!employeeId) {
+      return res.json({
+        todayAttendance: null,
+        hoursThisWeek: 0,
+        weeklyTargetHours: 40,
+        lateCountThisMonth: 0,
+        leaveBalances: [],
+        lastPayslip: null,
+        announcements: [],
+      });
+    }
 
     const todayStr = getTodayDateStr();
     const currentMonth = todayStr.slice(0, 7);

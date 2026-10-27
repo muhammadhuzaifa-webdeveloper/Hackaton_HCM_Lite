@@ -46,13 +46,13 @@ export default function EmployeeDashboardView({
     setLoading(true);
     try {
       const [dash, today] = await Promise.all([
-        hcmApi.getEmployeeDashboard(),
-        hcmApi.getMyTodayStatus(),
+        hcmApi.getEmployeeDashboard().catch(() => ({})),
+        hcmApi.getMyTodayStatus().catch(() => ({})),
       ]);
-      setData(dash);
-      setTodayStatus(today);
-    } catch (err) {
-      console.error(err);
+      setData(dash || {});
+      setTodayStatus(today || {});
+    } catch {
+      // safe graceful fallback
     } finally {
       setLoading(false);
     }
