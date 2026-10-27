@@ -15,10 +15,37 @@ export function getTodayDateStr(date = new Date()) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// Helper to get or auto-link an Employee record for any user role (including Admin/HR)
+const getOrEnsureEmployeeId = async (user) => {
+  if (user?.employeeId) return user.employeeId;
+  const userId = user?.userId || user?._id;
+  let emp = await Employee.findOne({ $or: [{ user: userId }, { email: user?.email }] });
+  if (!emp && user?.email) {
+    const count = await Employee.countDocuments();
+    const employeeCode = `EMP-${String(count + 1).padStart(3, "0")}`;
+    const nameParts = user.email.split("@")[0].split(".");
+    const firstName = nameParts[0] ? (nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1)) : "User";
+    const lastName = nameParts[1] ? (nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1)) : (user.role || "Staff");
+    emp = await Employee.create({
+      employeeCode,
+      firstName,
+      lastName,
+      email: user.email,
+      status: "active",
+      joiningDate: new Date(),
+      user: userId,
+    });
+  }
+  if (emp && userId) {
+    await User.findByIdAndUpdate(userId, { employeeId: emp._id });
+  }
+  return emp?._id || null;
+};
+
 // 1. Get today's attendance status for logged-in employee
 export const getMyTodayStatus = async (req, res) => {
   try {
-    const employeeId = req.user.employeeId;
+    const employeeId = await getOrEnsureEmployeeId(req.user);
     if (!employeeId) {
       return res.status(400).json({ message: "No employee profile found for user." });
     }
@@ -40,7 +67,7 @@ export const getMyTodayStatus = async (req, res) => {
 // 2. Check In
 export const checkIn = async (req, res) => {
   try {
-    const employeeId = req.user.employeeId;
+    const employeeId = await getOrEnsureEmployeeId(req.user);
     if (!employeeId) {
       return res.status(400).json({ message: "No employee profile found for user." });
     }
@@ -155,7 +182,7 @@ export const checkIn = async (req, res) => {
 // 3. Check Out
 export const checkOut = async (req, res) => {
   try {
-    const employeeId = req.user.employeeId;
+    const employeeId = await getOrEnsureEmployeeId(req.user);
     if (!employeeId) {
       return res.status(400).json({ message: "No employee profile found for user." });
     }
