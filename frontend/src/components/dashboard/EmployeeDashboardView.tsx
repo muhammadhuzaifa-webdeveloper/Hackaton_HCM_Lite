@@ -13,6 +13,13 @@ import {
   Camera,
   ArrowRight,
   ShieldCheck,
+  Flame,
+  Award,
+  Wallet,
+  CalendarPlus,
+  RefreshCw,
+  LogOut,
+  Zap,
 } from "lucide-react";
 import CameraCheckInModal from "./CameraCheckInModal";
 
@@ -33,17 +40,7 @@ export default function EmployeeDashboardView({
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-
-  // Exact Employee Theme Colors
-  const theme = {
-    bg: "#F7F8F5",
-    surface: "#FFFFFF",
-    text: "#293A31",
-    muted: "#566E61",
-    accent: "#428367",
-    accentBg: "rgba(66, 131, 103, 0.12)",
-    border: "#E4E8E1",
-  };
+  const [currentTime, setCurrentTime] = useState("");
 
   const loadData = async () => {
     setLoading(true);
@@ -63,6 +60,15 @@ export default function EmployeeDashboardView({
 
   useEffect(() => {
     loadData();
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleWebCheckIn = async () => {
@@ -97,8 +103,14 @@ export default function EmployeeDashboardView({
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="text-xs" style={{ color: theme.muted }}>Loading personal self-service dashboard...</p>
+      <div className="flex h-80 flex-col items-center justify-center gap-3">
+        <div className="relative flex h-12 w-12 items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 border-t-emerald-600 animate-spin" />
+          <Clock className="h-5 w-5 text-emerald-600 animate-pulse" />
+        </div>
+        <p className="text-xs font-semibold tracking-wide text-slate-500">
+          Loading Personal Self-Service Sanctuary...
+        </p>
       </div>
     );
   }
@@ -114,266 +126,305 @@ export default function EmployeeDashboardView({
   const announcements = data?.announcements || [];
 
   return (
-    <div className="space-y-6" style={{ color: theme.text }}>
-      {/* Check-In / Check-Out Action Widget */}
-      <div
-        className="p-6 rounded-2xl border shadow-xs"
-        style={{ backgroundColor: theme.surface, borderColor: theme.border }}
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b" style={{ borderColor: theme.border }}>
-          <div>
-            <span
-              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: theme.accentBg, color: theme.accent }}
-            >
-              Today: {todayStatus?.date}
-            </span>
-            <h2 className="text-lg font-extrabold mt-1" style={{ color: theme.text }}>
-              Daily Attendance Check-In
-            </h2>
-            <p className="text-xs mt-0.5" style={{ color: theme.muted }}>
-              Office starts at 09:00 AM (15m grace period). Server stamps exact time.
+    <div className="space-y-6 text-slate-800 animate-fade-in-up">
+      {/* 1. INTERACTIVE BIOMETRIC ATTENDANCE COMMAND DECK */}
+      <div className="relative overflow-hidden rounded-3xl border border-emerald-200/80 bg-gradient-to-br from-emerald-800 via-teal-800 to-emerald-950 p-6 sm:p-7 text-white shadow-xl shadow-emerald-900/10">
+        {/* Soft background ambient blur circles */}
+        <div className="pointer-events-none absolute -top-20 -right-20 h-72 w-72 rounded-full bg-emerald-400/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-teal-400/15 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 bg-emerald-700/60 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-emerald-200 border border-emerald-600/40">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              <span>{todayStatus?.date || "Today"} · Live Work Shift</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+              Personal Attendance & Work Hub
+            </h1>
+            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl">
+              Shift begins at 09:00 AM (15-min grace window). Official biometric AI face verification and timestamping.
             </p>
           </div>
 
-          {/* Current Status Badge */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: theme.muted }}>Current Status:</span>
-            {isCheckedOut ? (
-              <span className="rounded-full px-3 py-1 text-xs font-bold bg-slate-100 text-slate-700">
-                Checked Out ({attendance.status?.toUpperCase()})
-              </span>
-            ) : isCheckedIn ? (
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-bold ${
-                  attendance.status === "late"
-                    ? "bg-amber-100 text-amber-800"
-                    : "bg-emerald-100 text-emerald-800"
-                }`}
-              >
-                Checked In · {attendance.status?.toUpperCase()}
-              </span>
-            ) : (
-              <span className="rounded-full px-3 py-1 text-xs font-bold bg-red-100 text-red-800">
-                Not Checked In
-              </span>
-            )}
+          {/* Real-time Clock Card */}
+          <div className="flex items-center gap-4 bg-emerald-900/60 backdrop-blur-md border border-emerald-700/50 px-5 py-3.5 rounded-2xl">
+            <div className="text-right">
+              <div className="text-[11px] font-medium text-emerald-300 uppercase tracking-wider">
+                Current Time
+              </div>
+              <div className="font-mono text-xl sm:text-2xl font-black text-white tracking-wide">
+                {currentTime}
+              </div>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-700/50 border border-emerald-500/30">
+              <Clock className="h-6 w-6 text-emerald-300" />
+            </div>
           </div>
         </div>
 
+        {/* Status Alerts */}
         {statusMsg && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+          <div className="relative mt-4 flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 p-3 rounded-xl text-xs font-medium animate-fade-in-up">
+            <CheckCircle2 className="h-4 w-4 text-emerald-300 shrink-0" />
             <span>{statusMsg}</span>
           </div>
         )}
-
         {errorMsg && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 p-3 text-xs text-red-600 border border-red-200">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
+          <div className="relative mt-4 flex items-center gap-2 bg-rose-500/20 border border-rose-400/40 text-rose-100 p-3 rounded-xl text-xs font-medium animate-fade-in-up">
+            <AlertTriangle className="h-4 w-4 text-rose-300 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* 1. Quick Web Check-In */}
-          <button
-            onClick={handleWebCheckIn}
-            disabled={isCheckedIn || checkingIn}
-            className="flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold text-white transition disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
-            style={{ backgroundColor: theme.accent }}
-          >
-            <Clock className="h-4 w-4" />
-            {isCheckedIn ? "Checked In" : checkingIn ? "Recording..." : "Web Check-In"}
-          </button>
-
-          {/* 2. Biometric Camera + Face Attendance (Strict Verification) */}
-          <button
-            onClick={() => setShowCameraModal(true)}
-            disabled={isCheckedIn}
-            className="flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold text-white transition disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
-            style={{ backgroundColor: "#2D6A4F" }}
-          >
-            <Camera className="h-4 w-4" />
-            Biometric Camera Attendance
-          </button>
-
-          {/* 3. Check-Out */}
-          <button
-            onClick={handleWebCheckOut}
-            disabled={!isCheckedIn || isCheckedOut || checkingOut}
-            className="flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ borderColor: theme.border, color: theme.text, backgroundColor: "#F7F8F5" }}
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            {isCheckedOut ? "Checked Out" : checkingOut ? "Recording..." : "Check-Out"}
-          </button>
-        </div>
-
-        {/* Timestamps details */}
-        {isCheckedIn && (
-          <div className="mt-4 flex flex-wrap gap-4 text-xs border-t pt-3" style={{ borderColor: theme.border, color: theme.muted }}>
-            <span>In: {new Date(attendance.checkIn).toLocaleTimeString()}</span>
-            {attendance.checkOut && (
-              <span>Out: {new Date(attendance.checkOut).toLocaleTimeString()}</span>
-            )}
-            {attendance.durationMinutes > 0 && (
-              <span>Duration: {attendance.durationMinutes} mins</span>
-            )}
-            <span>Source: {attendance.source}</span>
+        {/* Biometric Interactive Action Center */}
+        <div className="relative mt-6 pt-5 border-t border-emerald-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Shift State Pill */}
+          <div className="flex items-center gap-3">
+            <div className="text-xs">
+              <span className="text-emerald-300 block text-[10px] uppercase font-bold tracking-wider">
+                Shift Status
+              </span>
+              <div className="font-bold text-sm text-white flex items-center gap-2 mt-0.5">
+                {isCheckedOut ? (
+                  <span className="inline-flex items-center gap-1.5 text-slate-300 bg-emerald-900/80 px-2.5 py-1 rounded-lg border border-emerald-700/60">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                    Shift Completed Today ({attendance.workHours ? `${attendance.workHours.toFixed(1)} hrs` : "Done"})
+                  </span>
+                ) : isCheckedIn ? (
+                  <span className="inline-flex items-center gap-1.5 text-emerald-200 bg-emerald-700/50 px-2.5 py-1 rounded-lg border border-emerald-500/60">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Checked In at {new Date(attendance.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-amber-200 bg-amber-900/50 px-2.5 py-1 rounded-lg border border-amber-700/60">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                    Awaiting Check-In
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-3">
+            {!isCheckedIn ? (
+              <>
+                <button
+                  onClick={() => setShowCameraModal(true)}
+                  className="relative group flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white text-emerald-900 font-extrabold text-xs shadow-lg shadow-emerald-950/30 hover:bg-emerald-50 hover:shadow-xl transition-all duration-200 active:scale-95"
+                >
+                  <Camera className="h-4 w-4 text-emerald-700 group-hover:scale-110 transition-transform" />
+                  <span>Biometric Camera Scan</span>
+                </button>
+
+                <button
+                  onClick={handleWebCheckIn}
+                  disabled={checkingIn}
+                  className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-700/60 hover:bg-emerald-700 border border-emerald-600/50 text-white font-bold text-xs transition-all active:scale-95 disabled:opacity-50"
+                >
+                  <Zap className="h-3.5 w-3.5 text-emerald-300" />
+                  <span>{checkingIn ? "Checking In..." : "1-Click Desk Check-In"}</span>
+                </button>
+              </>
+            ) : !isCheckedOut ? (
+              <button
+                onClick={handleWebCheckOut}
+                disabled={checkingOut}
+                className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs shadow-lg shadow-rose-950/30 transition-all duration-200 active:scale-95 disabled:opacity-50"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>{checkingOut ? "Ending Shift..." : "End Shift / Check-Out"}</span>
+              </button>
+            ) : (
+              <div className="text-xs text-emerald-200 font-semibold bg-emerald-900/60 px-4 py-2.5 rounded-xl border border-emerald-700/50">
+                All daily attendance duties finalized
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* 4 Stats Cards */}
+      {/* 2. EMPLOYEE SANCTUARY SCORECARD TILES */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Hours This Week */}
-        <div
-          className="p-5 rounded-2xl border shadow-xs"
-          style={{ backgroundColor: theme.surface, borderColor: theme.border }}
-        >
-          <span className="text-xs font-medium" style={{ color: theme.muted }}>Hours This Week</span>
-          <div className="mt-1 text-2xl font-extrabold" style={{ color: theme.text }}>
-            {hoursThisWeek} / 40 h
+        {/* Weekly Work Hours */}
+        <div className="group rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold text-slate-500">Weekly Logged Hours</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform">
+              <Clock className="h-4 w-4" />
+            </div>
           </div>
-          <div className="mt-2 h-1.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: "#EAF0EC" }}>
+          <div className="mt-3 text-3xl font-extrabold text-slate-900 flex items-baseline gap-1.5">
+            {hoursThisWeek.toFixed(1)} <span className="text-xs text-slate-400 font-medium">/ 40 hrs</span>
+          </div>
+          <div className="mt-3 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${Math.min(100, (hoursThisWeek / 40) * 100)}%`,
-                backgroundColor: theme.accent,
-              }}
-            ></div>
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-700"
+              style={{ width: `${Math.min((hoursThisWeek / 40) * 100, 100)}%` }}
+            />
           </div>
         </div>
 
-        {/* Late Count */}
-        <div
-          className="p-5 rounded-2xl border shadow-xs"
-          style={{ backgroundColor: theme.surface, borderColor: theme.border }}
-        >
-          <span className="text-xs font-medium" style={{ color: theme.muted }}>Late Count (This Month)</span>
-          <div className="mt-1 text-2xl font-extrabold text-amber-600">{lateCount}</div>
-          <p className="mt-1 text-[11px]" style={{ color: theme.muted }}>
-            {lateCount >= 3 ? "⚠️ 3+ lates: 0.5 day deduction" : `${3 - lateCount} lates until penalty`}
+        {/* Punctuality Rating & Streak */}
+        <div className="group rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold text-slate-500">Punctuality Score</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
+              <Flame className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-3 text-3xl font-extrabold text-slate-900 flex items-baseline gap-2">
+            {lateCount === 0 ? "100%" : `${Math.max(100 - lateCount * 10, 60)}%`}
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              {lateCount === 0 ? "5-Day Streak 🔥" : `${lateCount} Late days`}
+            </span>
+          </div>
+          <p className="mt-2 text-[11px] text-slate-500">Monthly on-time consistency rating</p>
+        </div>
+
+        {/* Available Annual Leaves */}
+        <div className="group rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold text-slate-500">Paid Leave Balance</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-50 text-teal-600 group-hover:scale-110 transition-transform">
+              <Calendar className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-3 text-3xl font-extrabold text-slate-900">
+            {leaveBalances.reduce((acc: number, b: any) => acc + (b.remainingDays || 0), 0)}
+            <span className="text-xs text-slate-400 font-medium ml-1">Days Left</span>
+          </div>
+          <p className="mt-2 text-[11px] text-teal-700 font-semibold cursor-pointer hover:underline" onClick={() => onNavigateTab("leave")}>
+            Apply for Time Off →
           </p>
         </div>
 
-        {/* Leave Balance Quick Card */}
-        <div
-          className="p-5 rounded-2xl border shadow-xs"
-          style={{ backgroundColor: theme.surface, borderColor: theme.border }}
-        >
-          <span className="text-xs font-medium" style={{ color: theme.muted }}>Leave Balance (Annual)</span>
-          <div className="mt-1 text-2xl font-extrabold" style={{ color: theme.accent }}>
-            {leaveBalances.find((b: any) => b.name === "annual")?.remaining || 14} days
-          </div>
-          <button
-            onClick={() => onNavigateTab("leave")}
-            className="mt-1 text-[11px] font-semibold hover:underline flex items-center gap-1"
-            style={{ color: theme.accent }}
-          >
-            Apply Leave / View Balances <ArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-
-        {/* Last Payslip Quick Card */}
-        <div
-          className="p-5 rounded-2xl border shadow-xs"
-          style={{ backgroundColor: theme.surface, borderColor: theme.border }}
-        >
-          <span className="text-xs font-medium" style={{ color: theme.muted }}>Last Net Payslip</span>
-          <div className="mt-1 text-2xl font-extrabold text-emerald-700">
-            {lastPayslip ? `PKR ${lastPayslip.netPay?.toLocaleString()}` : "Not finalized"}
-          </div>
-          <button
-            onClick={() => onNavigateTab("payslips")}
-            className="mt-1 text-[11px] font-semibold hover:underline flex items-center gap-1 text-emerald-700"
-          >
-            View Payslips <ArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-      </div>
-
-      {/* Leave Balances Grid */}
-      <div
-        className="p-5 rounded-2xl border shadow-xs"
-        style={{ backgroundColor: theme.surface, borderColor: theme.border }}
-      >
-        <div className="flex items-center justify-between mb-3 border-b pb-2" style={{ borderColor: theme.border }}>
-          <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: theme.text }}>
-            <Calendar className="h-4 w-4" style={{ color: theme.accent }} />
-            My Yearly Leave Quotas
-          </h3>
-          <button
-            onClick={() => onNavigateTab("leave")}
-            className="text-xs font-semibold hover:underline"
-            style={{ color: theme.accent }}
-          >
-            Open Smart Leave Form
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {leaveBalances.map((b: any) => (
-            <div
-              key={b.leaveTypeId}
-              className="p-3 rounded-xl border text-xs"
-              style={{ backgroundColor: "#F7F9F6", borderColor: theme.border }}
-            >
-              <span className="font-semibold" style={{ color: theme.text }}>{b.displayName}</span>
-              <p className="text-lg font-bold mt-1" style={{ color: theme.accent }}>
-                {b.remaining} {b.name === "unpaid" ? "" : "left"}
-              </p>
-              <p className="text-[10px]" style={{ color: theme.muted }}>Used: {b.used} / Quota: {b.quota || "∞"}</p>
+        {/* Compensation & Payslip */}
+        <div className="group rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold text-slate-500">Latest Disbursed Pay</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform">
+              <Wallet className="h-4 w-4" />
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Announcements Feed */}
-      <div
-        className="p-5 rounded-2xl border shadow-xs"
-        style={{ backgroundColor: theme.surface, borderColor: theme.border }}
-      >
-        <div className="flex items-center justify-between mb-3 border-b pb-2" style={{ borderColor: theme.border }}>
-          <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: theme.text }}>
-            <Bell className="h-4 w-4 text-amber-500" />
-            Company Announcements
-          </h3>
-          <span className="text-xs" style={{ color: theme.muted }}>{announcements.length} Posts</span>
-        </div>
-
-        {announcements.length === 0 ? (
-          <p className="text-center py-6 text-xs" style={{ color: theme.muted }}>No active company announcements.</p>
-        ) : (
-          <div className="space-y-3">
-            {announcements.map((a: any) => (
-              <div
-                key={a._id}
-                className="p-3.5 rounded-xl border text-xs"
-                style={{ backgroundColor: "#F9FAF8", borderColor: theme.border }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold" style={{ color: theme.text }}>{a.title}</span>
-                  <span className="text-[10px]" style={{ color: theme.muted }}>
-                    {new Date(a.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="mt-1" style={{ color: theme.muted }}>{a.message}</p>
-              </div>
-            ))}
           </div>
-        )}
+          <div className="mt-3 text-2xl font-extrabold text-slate-900 truncate">
+            {lastPayslip ? `PKR ${lastPayslip.netSalary?.toLocaleString()}` : "Active Cycle"}
+          </div>
+          <p className="mt-2 text-[11px] text-slate-500">
+            {lastPayslip?.month || "Standard Monthly Payroll"}
+          </p>
+        </div>
       </div>
 
-      {/* Camera Check-In Modal */}
-      <CameraCheckInModal
-        isOpen={showCameraModal}
-        onClose={() => setShowCameraModal(false)}
-        onSuccess={loadData}
-      />
+      {/* 3. DUAL COLUMN DETAILS (LEAVE BALANCES & ANNOUNCEMENTS) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Leave Allowance Portfolio */}
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
+                <CalendarPlus className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Leave Balance Portfolio</h3>
+                <p className="text-[11px] text-slate-500">Your categorized annual entitlement breakdown</p>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigateTab("leave")}
+              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/60 transition-all hover:bg-emerald-100"
+            >
+              + Apply Leave
+            </button>
+          </div>
+
+          {leaveBalances.length === 0 ? (
+            <div className="py-10 text-center text-xs text-slate-400">
+              No leave quotas assigned for current tenure yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {leaveBalances.map((bal: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-emerald-50/50 hover:border-emerald-200 transition-all"
+                >
+                  <div className="text-xs font-bold text-slate-700">
+                    {bal.leaveType?.name || "General"}
+                  </div>
+                  <div className="mt-2 text-2xl font-black text-emerald-700">
+                    {bal.remainingDays}
+                    <span className="text-[11px] text-slate-400 font-normal ml-1">/ {bal.allocatedDays}</span>
+                  </div>
+                  <p className="mt-1 text-[10px] text-slate-500 font-medium">Days remaining</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Company Announcements & Community Board */}
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
+                <Bell className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Company Announcements</h3>
+                <p className="text-[11px] text-slate-500">Official updates from Human Resources & Executive Board</p>
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigateTab("announcements")}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            >
+              All Notices <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+
+          {announcements.length === 0 ? (
+            <div className="py-10 text-center text-xs text-slate-400">
+              No active company broadcasts at this moment.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {announcements.slice(0, 3).map((item: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-blue-50/40 hover:border-blue-100 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800">{item.title}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-600 line-clamp-2">{item.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Camera Check-In Biometric Modal */}
+      {showCameraModal && (
+        <CameraCheckInModal
+          isOpen={showCameraModal}
+          onClose={() => setShowCameraModal(false)}
+          onSuccess={() => {
+            setShowCameraModal(false);
+            setStatusMsg("Biometric verification verified! Attendance marked.");
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }
