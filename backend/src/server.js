@@ -15,6 +15,7 @@ import connectDB from "./config/db.js";
 // Routes
 import authRoutes from "./routes/authRoutes.js";
 import setupRoutes from "./routes/setupRoutes.js";
+import { seedDemoDataInternal } from "./controllers/setupController.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
@@ -89,7 +90,13 @@ app.use((err, _req, res, _next) => {
 });
 
 if (!process.env.VERCEL) {
-  connectDB().then(() => {
+  connectDB().then(async () => {
+    try {
+      await seedDemoDataInternal();
+      console.log("Demo accounts (Admin, HR, Employee) ready in database.");
+    } catch (e) {
+      console.warn("Auto-seed check:", e.message);
+    }
     app.listen(PORT, () => {
       console.log(`HCM Lite Backend running on http://localhost:${PORT}`);
     });

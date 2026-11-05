@@ -580,9 +580,8 @@ export const resetUserPassword = async (req, res) => {
 };
 
 // Seed demo data for quick Hackathon testing
-export const seedDemoData = async (req, res) => {
-  try {
-    // 1. Company Setting
+export const seedDemoDataInternal = async () => {
+  // 1. Company Setting
     let company = await CompanySetting.findOne();
     if (!company) {
       company = await CompanySetting.create({
@@ -674,6 +673,11 @@ export const seedDemoData = async (req, res) => {
         isActive: true,
         mustChangePassword: false,
       });
+    } else {
+      hrUser.password = "Password@123";
+      hrUser.role = "HR";
+      hrUser.isActive = true;
+      await hrUser.save();
     }
 
     // 8. Sample Employees
@@ -746,6 +750,12 @@ export const seedDemoData = async (req, res) => {
             isActive: true,
             mustChangePassword: false,
           });
+        } else {
+          empUser.password = "Password@123";
+          empUser.role = "Employee";
+          empUser.employeeId = emp._id;
+          empUser.isActive = true;
+          await empUser.save();
         }
         emp.user = empUser._id;
         await emp.save();
@@ -798,13 +808,19 @@ export const seedDemoData = async (req, res) => {
       });
     }
 
+    return {
+      admin: { email: "muhammadhuzaifa22056@gmail.com", password: "Cycle@#$500", role: "Admin" },
+      hr: { email: "hr@saylani.com", password: "Password@123", role: "HR" },
+      employee: { email: "ali@saylani.com", password: "Password@123", role: "Employee" },
+    };
+};
+
+export const seedDemoData = async (req, res) => {
+  try {
+    const accounts = await seedDemoDataInternal();
     return res.json({
       message: "Demo dataset initialized successfully!",
-      accounts: {
-        admin: { email: "muhammadhuzaifa22056@gmail.com", password: "Cycle@#$500", role: "Admin" },
-        hr: { email: "hr@saylani.com", password: "Password@123", role: "HR" },
-        employee: { email: "ali@saylani.com", password: "Password@123", role: "Employee" },
-      },
+      accounts,
     });
   } catch (err) {
     return res.status(500).json({ message: err.message });

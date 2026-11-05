@@ -58,9 +58,13 @@ export default function LoginPage() {
       const rolePath = loggedInUser.role.toLowerCase();
       router.push(`/${rolePath}/overview`);
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Invalid email or password. Please try again."
-      );
+      if (!err.response || err.code === "ERR_NETWORK" || err.message === "Network Error") {
+        setError("Cannot connect to server. Please ensure the backend is running on http://localhost:5001.");
+      } else {
+        setError(
+          err.response?.data?.message || "Invalid email or password. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
