@@ -59,7 +59,7 @@ export default function LoginPage() {
       router.push(`/${rolePath}/overview`);
     } catch (err: any) {
       if (!err.response || err.code === "ERR_NETWORK" || err.message === "Network Error") {
-        setError("Cannot connect to server. Please ensure the backend is running on http://localhost:5001.");
+        setError("Cannot connect to backend server. Please verify the backend API is online.");
       } else {
         setError(
           err.response?.data?.message || "Invalid email or password. Please try again."
