@@ -1,7 +1,10 @@
 import axios from "axios";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://hackaton-hcm-lite-rfh7.vercel.app/api";
+const rawApiUrl =
+  process.env.NEXT_PUBLIC_API_URL || "https://hackaton-hcm-lite.vercel.app/api";
+
+const cleanUrl = rawApiUrl.replace(/\/+$/, "");
+const API_URL = cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
